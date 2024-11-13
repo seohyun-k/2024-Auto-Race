@@ -1,10 +1,8 @@
-# 필요 라이브러리 설치 및 임포트
-import numpy as np                  # 수학 연산을 쉽게 하기 위한 라이브러리 (배열, 수학 함수 등 제공)
-import matplotlib.pyplot as plt     # 그래프를 그리기 위한 라이브러리
-from matplotlib.animation import FuncAnimation  # 애니메이션을 만들기 위한 라이브러리 (여기서는 사용 안 했지만 미리 불러옴)
-import math                         # 삼각 함수 등 수학 계산을 위한 기본 라이브러리
+import numpy as np           
+import matplotlib.pyplot as plt    
+from matplotlib.animation import FuncAnimation  
+import math           
 
-# 차량 클래스 정의
 class Vehicle:
     # 차량의 초기 위치(x, y), 방향(yaw), 바퀴 간 거리(wheel_base)를 설정
     def __init__(self, x, y, yaw, wheel_base):
@@ -17,14 +15,13 @@ class Vehicle:
     # 차량의 새로운 위치와 방향을 업데이트하는 함수
     # 'steering_angle'은 차량이 회전할 때 바퀴가 꺾이는 각도
     def update(self, steering_angle, dt=0.1): 
-        # x 좌표 업데이트 (현재 방향으로 dt(0.1초)동안 이동한 거리 계산)
+        # 현재 방향으로 dt(0.1초)동안 이동한 거리 계산
         self.x += self.velocity * math.cos(self.yaw) * dt
-        # y 좌표 업데이트 (현재 방향으로 dt(0.1초)동안 이동한 거리 계산)
         self.y += self.velocity * math.sin(self.yaw) * dt
-        # 방향(yaw) 업데이트 (바퀴 간 거리와 조향 각도에 따라 회전 각도를 업데이트)
+        # 바퀴 간 거리와 조향 각도에 따라 회전 각도를 업데이트
         self.yaw += self.velocity / self.wheel_base * math.tan(steering_angle) * dt
 
-# 순수 추종(Pure Pursuit) 제어 함수 정의
+
 def pure_pursuit_control(vehicle, path, lookahead_distance):
     closest_distance = float('inf')  # 경로와 차량 사이의 가장 가까운 거리를 저장할 변수
     target_x, target_y = None, None  # 목표 위치의 x, y 좌표를 저장할 변수
@@ -52,22 +49,23 @@ def pure_pursuit_control(vehicle, path, lookahead_distance):
 
 # 시뮬레이션 설정
 def run_simulation():
-    # 경로 설정 (여기서는 곡선 형태의 예시 경로)
-    path_x = np.linspace(0, 50, 100)            # x축 좌표 생성
-    path_y = 2 * np.sin(0.1 * path_x) * path_x / 10  # y축 좌표 생성, 곡선 경로
-    path = list(zip(path_x, path_y))            # (x, y) 형태로 경로 점을 묶어서 리스트로 만듦
+    # x축 좌표와 y축 좌표를 직접 설정해서 경로 만들기
+    path_x = [3, 3, 4, 7, 12, 17, 22, 26, 28, 30, 34]             # x축 좌표 리스트
+    path_y = [30, 24, 20, 16, 13, 12, 11, 7, 4, 3, 3]                 # y축 좌표 리스트, 원하는 대로 설정 가능
+    path = list(zip(path_x, path_y))
+
 
     # 차량 초기화 (시작 위치: x=0, y=-3, 진행 방향은 0도, 바퀴 간 거리 2.5)
-    vehicle = Vehicle(x=0, y=-3, yaw=np.deg2rad(0), wheel_base=2.5)
-    lookahead_distance = 2.0                    # 차량이 경로를 따라갈 때 목표로 할 거리 설정
+    vehicle = Vehicle(x=3, y=30, yaw=np.deg2rad(0), wheel_base=2.5)
+    lookahead_distance = 0.5                    # 차량이 경로를 따라갈 때 목표로 할 거리 설정
 
     # 시뮬레이션 결과를 저장할 리스트 (x좌표, y좌표)
     x_trajectory = []
     y_trajectory = []
 
     # 시뮬레이션 실행 (300번 반복해서 차량을 움직임)
-    for _ in range(300):
-        # 순수 추종 함수로 조향 각도와 목표점(target_x, target_y)을 계산
+    for _ in range(500):
+        # 조향 각도와 목표점(target_x, target_y)을 계산
         steering_angle, target_x, target_y = pure_pursuit_control(vehicle, path, lookahead_distance)
         # 계산된 조향 각도로 차량의 위치와 방향을 업데이트
         vehicle.update(steering_angle)
