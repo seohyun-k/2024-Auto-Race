@@ -1,0 +1,82 @@
+# 필요 라이브러리 설치 및 임포트
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import math
+
+# 차량 클래스 정의
+class Vehicle:
+    def __init__(self, x, y, yaw, wheel_base):
+        self.x = x
+        self.y = y
+        self.yaw = yaw
+        self.wheel_base = wheel_base
+        self.velocity = 1.0  # 차량 속도 설정
+
+    def update(self, steering_angle, dt=0.1):
+        # 차량의 새로운 위치와 방향 계산 (Kinematic 모델)
+        self.x += self.velocity * math.cos(self.yaw) * dt
+        self.y += self.velocity * math.sin(self.yaw) * dt
+        self.yaw += self.velocity / self.wheel_base * math.tan(steering_angle) * dt
+
+# Pure Pursuit 함수 정의
+def pure_pursuit_control(vehicle, path, lookahead_distance):
+    closest_distance = float('inf')
+    target_x, target_y = None, None
+
+    # 경로의 각 점을 순회하여 Lookahead 거리 이내의 목표점 탐색
+    for path_x, path_y in path:
+        distance = math.sqrt((path_x - vehicle.x) ** 2 + (path_y - vehicle.y) ** 2)
+        angle_to_point = math.atan2(path_y - vehicle.y, path_x - vehicle.x) - vehicle.yaw
+
+    # 목표 지점이 전방에 있고 Lookahead 거리 이내일 때만 목표로 설정
+        if distance < closest_distance and distance > lookahead_distance and -math.pi / 2 < angle_to_point < math.pi / 2:
+            closest_distance = distance
+            target_x, target_y = path_x, path_y
+
+    # 목표점이 없다면 경로의 마지막 점을 설정
+    if target_x is None or target_y is None:
+        target_x, target_y = path[-1]
+
+    # 조향 각도 계산
+    alpha = math.atan2(target_y - vehicle.y, target_x - vehicle.x) - vehicle.yaw
+    steering_angle = math.atan2(2.0 * vehicle.wheel_base * math.sin(alpha) / lookahead_distance, 1.0)
+    return steering_angle, target_x, target_y
+
+# 시뮬레이션 설정
+def run_simulation():
+    # 경로 설정 (곡선 형태의 예시 경로)
+    path_x = np.linspace(0, 50, 100)
+    path_y = 2 * np.sin(0.1 * path_x) * path_x / 10  # 곡선 경로
+    path = list(zip(path_x, path_y))
+
+    # 차량 초기화
+    vehicle = Vehicle(x=0, y=-3, yaw=np.deg2rad(0), wheel_base=2.5)
+    lookahead_distance = 2.0
+
+    # 시뮬레이션 결과 저장 리스트
+    x_trajectory = []
+    y_trajectory = []
+
+    # 시뮬레이션 실행
+    for _ in range(300):
+        steering_angle, target_x, target_y = pure_pursuit_control(vehicle, path, lookahead_distance)
+        vehicle.update(steering_angle)
+
+        x_trajectory.append(vehicle.x)
+        y_trajectory.append(vehicle.y)
+
+        # 목표점 표시
+        plt.cla()
+        plt.plot(path_x, path_y, 'g--', label="Path")
+        plt.plot(x_trajectory, y_trajectory, 'b-', label="Trajectory")
+        plt.plot(vehicle.x, vehicle.y, 'ro', label="Vehicle")
+        plt.plot(target_x, target_y, 'go', label="Lookahead Target")
+        plt.axis("equal")
+        plt.title("Pure Pursuit Simulation")
+        plt.pause(0.001)
+
+    plt.show()
+
+# 시뮬레이션 실행
+run_simulation()
